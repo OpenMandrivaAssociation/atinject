@@ -1,11 +1,12 @@
 %{?_javapackages_macros:%_javapackages_macros}
 Name:           atinject
 Version:        1
-Release:        13.20100611svn86.1%{?dist}
+Release:        17.20100611svn86%{?dist}
 Summary:        Dependency injection specification for Java (JSR-330)
 License:        ASL 2.0
 URL:            http://code.google.com/p/atinject/
 BuildArch:      noarch
+
 # latest release doesn't generate javadocs and there is no source
 # tarball with pom.xml or ant build file
 #
@@ -16,9 +17,12 @@ Source0:        %{name}-%{version}.tar.xz
 Source1:        MANIFEST.MF
 Source2:        http://www.apache.org/licenses/LICENSE-2.0.txt
 
+# Compile with source/target 1.5
+Patch0:         %{name}-target-1.5.patch
+
 BuildRequires:  java-devel
 BuildRequires:  junit
-Requires:       java
+Requires:       java-headless
 
 Provides:       javax.inject
 
@@ -43,11 +47,12 @@ Requires:       junit
 %description    tck
 %{summary}.
 
-
 %prep
 %setup -q
 cp %{SOURCE2} LICENSE
 ln -s %{_javadir} lib
+
+%patch0 -p1
 
 %build
 set -e
@@ -93,6 +98,18 @@ ln -sf ../%{name}.jar %{buildroot}%{_javadir}/javax.inject/
 %doc %{_javadocdir}/%{name}
 
 %changelog
+* Mon Jun 09 2014 Michal Srb <msrb@redhat.com> - 1-17.20100611svn86
+- Apply the "source/target 1.5" patch
+
+* Mon Jun  9 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1-16.20100611svn86
+- Compile with source/target 1.5
+
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1-15.20100611svn86
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
+* Tue Mar 04 2014 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1-14.20100611svn86
+- Use Requires: java-headless rebuild (#1067528)
+
 * Mon Aug 12 2013 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1-13.20100611svn86
 - Add javax.inject provides and directory
 
@@ -136,3 +153,4 @@ ln -sf ../%{name}.jar %{buildroot}%{_javadir}/javax.inject/
 
 * Tue Sep 21 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1-1.20100611svn86
 - Initial version of the package
+
