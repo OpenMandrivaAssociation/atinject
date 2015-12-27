@@ -1,7 +1,7 @@
 %{?_javapackages_macros:%_javapackages_macros}
 Name:           atinject
 Version:        1
-Release:        17.20100611svn86%{?dist}
+Release:        19.20100611svn86
 Summary:        Dependency injection specification for Java (JSR-330)
 License:        ASL 2.0
 URL:            http://code.google.com/p/atinject/
@@ -14,15 +14,20 @@ BuildArch:      noarch
 # rm -rf atinject-1/{lib,javadoc}/
 # tar caf atinject-1.tar.xz atinject-1
 Source0:        %{name}-%{version}.tar.xz
-Source1:        MANIFEST.MF
-Source2:        http://www.apache.org/licenses/LICENSE-2.0.txt
 
+# These manifests based on the ones shipped by eclipse.org
+Source1:        MANIFEST.MF
+Source2:        MANIFEST-TCK.MF
+
+Source3:        http://www.apache.org/licenses/LICENSE-2.0.txt
+
+Group:	Development/Java
 # Compile with source/target 1.5
 Patch0:         %{name}-target-1.5.patch
 
+BuildRequires:  javapackages-local
 BuildRequires:  java-devel
 BuildRequires:  junit
-Requires:       java-headless
 
 Provides:       javax.inject
 
@@ -49,10 +54,20 @@ Requires:       junit
 
 %prep
 %setup -q
-cp %{SOURCE2} LICENSE
+cp %{SOURCE3} LICENSE
 ln -s %{_javadir} lib
 
 %patch0 -p1
+
+# Fix dep in TCK pom
+sed -i -e 's/pom\.groupId/project.groupId/' tck-pom.xml
+
+# J2EE API symlinks
+%mvn_file :javax.inject atinject javax.inject/atinject
+
+# TCK sub-package
+%mvn_file :javax.inject-tck atinject-tck
+%mvn_package :javax.inject-tck tck
 
 %build
 set -e
@@ -60,44 +75,40 @@ alias rm=:
 alias xargs=:
 . ./build.sh
 
-# Inject OSGi manifest required by Eclipse.
-jar umf %{SOURCE1} build/dist/*.jar
+# Inject OSGi manifests required by Eclipse.
+jar umf %{SOURCE1} build/dist/javax.inject.jar
+jar umf %{SOURCE2} build/tck/dist/javax.inject-tck.jar
+
+%mvn_artifact pom.xml build/dist/javax.inject.jar
+%mvn_artifact tck-pom.xml build/tck/dist/javax.inject-tck.jar
 
 %install
-# Maven POMs
-install -d -m 755 %{buildroot}%{_mavenpomdir}
-install -p -m 644 pom.xml %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
-install -p -m 644 tck-pom.xml %{buildroot}%{_mavenpomdir}/JPP-%{name}-tck.pom
-
-# JARs
-install -d -m 755 %{buildroot}%{_javadir}
-install -p -m 644 build/dist/*.jar %{buildroot}%{_javadir}/%{name}.jar
-install -p -m 644 build/tck/dist/*.jar %{buildroot}%{_javadir}/%{name}-tck.jar
-
-# XMvn metadata
-%add_maven_depmap
-%add_maven_depmap JPP-%{name}-tck.pom %{name}-tck.jar -f tck
+%mvn_install
 
 # Javadocs
 install -d -m 755 %{buildroot}%{_javadocdir}/%{name}/tck
 cp -pr build/javadoc/* %{buildroot}%{_javadocdir}/%{name}
 cp -pr build/tck/javadoc/* %{buildroot}%{_javadocdir}/%{name}/tck
 
-# J2EE API symlinks
-install -d -m 755 %{buildroot}%{_javadir}/javax.inject/
-ln -sf ../%{name}.jar %{buildroot}%{_javadir}/javax.inject/
-
 %files -f .mfiles
 %doc LICENSE
-%{_javadir}/javax.inject
+%dir %{_javadir}/javax.inject
+%dir %{_mavenpomdir}/javax.inject
 
 %files tck -f .mfiles-tck
 
 %files javadoc
 %doc LICENSE
-%doc %{_javadocdir}/%{name}
+%{_javadocdir}/atinject
 
 %changelog
+* Thu Mar 12 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 1-19.20100611svn86
+- Add javapackages Maven coordinates to manifests
+
+* Wed Feb 18 2015 Mat Booth <mat.booth@redhat.com> - 1-18.20100611svn86
+- Add OSGi manifest to tck jar
+- Install with mvn_install
+
 * Mon Jun 09 2014 Michal Srb <msrb@redhat.com> - 1-17.20100611svn86
 - Apply the "source/target 1.5" patch
 
