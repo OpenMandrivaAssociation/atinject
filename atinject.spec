@@ -4,7 +4,7 @@ Version:        1
 Release:        19.20100611svn86
 Summary:        Dependency injection specification for Java (JSR-330)
 License:        ASL 2.0
-URL:            http://code.google.com/p/atinject/
+URL:            https://code.google.com/p/atinject/
 BuildArch:      noarch
 
 # latest release doesn't generate javadocs and there is no source
